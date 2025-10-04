@@ -14,6 +14,8 @@ import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/profile/presentation/pages/change_language_page.dart';
 import 'package:healer_map_flutter/features/blog/presentation/pages/blog_detail_page.dart';
 import 'package:healer_map_flutter/features/blog/data/models/blog_post.dart';
+import 'package:healer_map_flutter/features/home/presentation/pages/healer_detail_page.dart';
+import 'package:healer_map_flutter/features/home/data/models/place.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -29,6 +31,7 @@ class AppRoutes {
   static const search = '/search';
   static const editProfile = '/edit-profile';
   static const blogDetail = '/blog-detail';
+  static const healerDetail = '/healer-detail';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -78,6 +81,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final post = state.extra as BlogPost;
           return BlogDetailPage(post: post);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.healerDetail,
+        builder: (context, state) {
+          final place = state.extra as Place;
+          return HealerDetailPage(place: place);
         },
       ),
     ],

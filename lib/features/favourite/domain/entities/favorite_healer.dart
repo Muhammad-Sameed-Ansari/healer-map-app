@@ -5,6 +5,8 @@ class FavoriteHealer {
   final String location;
   final String language;
   final String? imageUrl;
+  final List<String> category;
+  final bool isFavorite;
 
   const FavoriteHealer({
     required this.id,
@@ -13,6 +15,8 @@ class FavoriteHealer {
     required this.location,
     required this.language,
     this.imageUrl,
+    this.category = const <String>[],
+    this.isFavorite = true,
   });
 
   factory FavoriteHealer.fromHealerCard({
@@ -30,6 +34,19 @@ class FavoriteHealer {
       location: location,
       language: language,
       imageUrl: imageUrl,
+    );
+  }
+
+  factory FavoriteHealer.fromJson(Map<String, dynamic> json) {
+    return FavoriteHealer(
+      id: (json['id'] ?? '').toString(),
+      name: (json['title'] ?? '') as String,
+      specialty: (json['excerpt'] ?? '') as String,
+      location: (json['location'] ?? '') as String,
+      language: (json['language'] ?? '') as String,
+      imageUrl: json['featured_image'] as String?,
+      category: (json['category'] as List?)?.whereType<String>().toList() ?? const <String>[],
+      isFavorite: true,
     );
   }
 }

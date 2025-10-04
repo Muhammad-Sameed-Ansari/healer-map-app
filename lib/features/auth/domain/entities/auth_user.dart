@@ -7,6 +7,7 @@ class AuthUser {
   final String displayName;
   final String? token;
   final int? tokenExpires;
+  final String? avatarUrl;
 
   const AuthUser({
     required this.id,
@@ -17,6 +18,7 @@ class AuthUser {
     required this.displayName,
     this.token,
     this.tokenExpires,
+    this.avatarUrl,
   });
 
   String get name => '$firstName $lastName'.trim();
@@ -39,6 +41,7 @@ class AuthUser {
       displayName: displayName,
       token: token ?? this.token,
       tokenExpires: tokenExpires ?? this.tokenExpires,
+      avatarUrl: avatarUrl,
     );
   }
 }

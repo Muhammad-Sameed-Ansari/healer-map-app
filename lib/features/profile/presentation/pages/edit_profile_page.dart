@@ -173,9 +173,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       _showMainScreenMessage(context, message, isSuccess);
 
       if (isSuccess) {
-        // Update the user data in the auth controller if needed
-        // For now, just go back to profile page
-        Future.delayed(const Duration(milliseconds: 500), () {
+        // Invalidate auth controller to refresh Profile/Home screens
+        ref.invalidate(authControllerProvider);
+        // Go back to profile page shortly after
+        Future.delayed(const Duration(milliseconds: 200), () {
           if (context.mounted) {
             context.pop();
           }
@@ -210,15 +211,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 Center(
                   child: Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: ColorConstants.surface,
-                        backgroundImage: _selectedImage != null
-                            ? FileImage(_selectedImage!)
-                            : null,
-                        child: _selectedImage == null
-                            ? const Icon(Icons.person, size: 50, color: Colors.black54)
-                            : null,
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final user = ref.watch(authControllerProvider).value;
+                          final remote = user?.avatarUrl ?? '';
+                          final hasRemote = remote.isNotEmpty;
+                          return CircleAvatar(
+                            radius: 50,
+                            backgroundColor: ColorConstants.surface,
+                            backgroundImage: _selectedImage != null
+                                ? FileImage(_selectedImage!)
+                                : (hasRemote ? NetworkImage(remote) : null) as ImageProvider<Object>?,
+                            child: _selectedImage == null && !hasRemote
+                                ? const Icon(Icons.person, size: 50, color: Colors.black54)
+                                : null,
+                          );
+                        },
                       ),
                       Positioned(
                         bottom: 0,

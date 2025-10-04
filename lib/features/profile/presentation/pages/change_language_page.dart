@@ -5,6 +5,7 @@ import 'package:healer_map_flutter/common/widgets/custom_button.dart';
 import 'package:healer_map_flutter/core/constants/app_constants.dart';
 import 'package:healer_map_flutter/core/localization/app_localization.dart';
 import 'package:go_router/go_router.dart';
+import 'package:healer_map_flutter/app/router.dart';
 
 class ChangeLanguagePage extends StatefulWidget {
   const ChangeLanguagePage({super.key});
@@ -141,15 +142,24 @@ class _ChangeLanguagePageState extends State<ChangeLanguagePage> {
                 localizationProvider.setLocaleFromLanguageCode(_selectedLanguage);
 
                 // Show confirmation message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(localizations.languageChanged(_languages.firstWhere((lang) => lang['code'] == _selectedLanguage)['native']!)),
-                    backgroundColor: ColorConstants.primary,
-                  ),
-                );
+                final rootCtx = rootNavigatorKey.currentContext;
+                if (rootCtx != null) {
+                  ScaffoldMessenger.of(rootCtx).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        localizations.languageChanged(
+                          _languages.firstWhere((lang) => lang['code'] == _selectedLanguage)['native']!,
+                        ),
+                      ),
+                      backgroundColor: ColorConstants.primary,
+                    ),
+                  );
+                }
 
-                // Navigate back to profile
-                context.pop();
+                // Defer pop to next frame to avoid using deactivated context during rebuilds
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) context.pop();
+                });
               } : () {},
               titleTextStyle: const TextStyle(
                 color: Colors.white,

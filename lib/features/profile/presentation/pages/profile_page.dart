@@ -474,10 +474,18 @@ class ProfilePage extends ConsumerWidget {
           children: [
             // const SizedBox(height: 16),
             // Avatar
-            const CircleAvatar(
-              radius: 48,
-              backgroundColor: Color(0xFFEDE7F6),
-              child: Icon(Icons.person, size: 48, color: Colors.black54),
+            Consumer(
+              builder: (context, ref, _) {
+                final u = ref.watch(authControllerProvider).value;
+                final avatarStr = u?.avatarUrl ?? '';
+                final hasAvatar = avatarStr.isNotEmpty;
+                return CircleAvatar(
+                  radius: 48,
+                  backgroundColor: const Color(0xFFEDE7F6),
+                  backgroundImage: hasAvatar ? NetworkImage(avatarStr) : null,
+                  child: hasAvatar ? null : const Icon(Icons.person, size: 48, color: Colors.black54),
+                );
+              },
             ),
             const SizedBox(height: 16),
             // Username handle style

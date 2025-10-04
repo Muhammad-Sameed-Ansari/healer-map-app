@@ -17,14 +17,22 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _currentIndex = 0;
+  bool _mapInitialized = false;
 
-  late final List<Widget> _tabs = <Widget>[
-    const HomePage(),
-    const MapPage(),
-    const FavouritePage(),
-    const BlogPage(),
-    const ProfilePage(),
-  ];
+  late List<Widget> _tabs;
+
+  @override
+  void initState() {
+    super.initState();
+    // Do NOT initialize MapPage at startup; use a lightweight placeholder instead.
+    _tabs = <Widget>[
+      const HomePage(),
+      const SizedBox.shrink(), // Map placeholder; replaced on first selection
+      const FavouritePage(),
+      const BlogPage(),
+      const ProfilePage(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +47,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         indicatorColor: Colors.white,
         backgroundColor: Colors.white,
         selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        onDestinationSelected: (i) => setState(() {
+          // Lazy-init MapPage only when the Map tab is selected the first time
+          if (i == 1 && !_mapInitialized) {
+            _tabs[1] = const MapPage();
+            _mapInitialized = true;
+          }
+          _currentIndex = i;
+        }),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           NavigationDestination(

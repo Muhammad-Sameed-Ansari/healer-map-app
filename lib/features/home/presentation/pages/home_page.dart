@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:healer_map_flutter/app/router.dart';
-import 'package:healer_map_flutter/core/utils/shared_pref_instance.dart';
 import 'package:healer_map_flutter/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:healer_map_flutter/core/constants/app_constants.dart';
 import 'package:healer_map_flutter/core/localization/app_localization.dart';
 import 'package:healer_map_flutter/common/widgets/healer_card_skeleton.dart';
 import 'package:healer_map_flutter/features/home/presentation/providers/places_provider.dart';
 import 'package:healer_map_flutter/features/home/data/models/place.dart';
+import 'package:healer_map_flutter/features/favourite/presentation/controllers/favorites_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
@@ -79,12 +79,14 @@ class _HomePageState extends State<HomePage> {
             // Header with avatar, greeting and Add Business
             Consumer(
               builder: (context, ref, child) {
-                final auth = ref.watch(authControllerProvider).value;
+                final authUser = ref.watch(authControllerProvider).value;
                 return Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 22,
-                      backgroundImage: AssetImage('assets/images/Welcome.png'),
+                      backgroundImage: (authUser?.avatarUrl != null && authUser!.avatarUrl!.isNotEmpty)
+                          ? NetworkImage(authUser.avatarUrl!)
+                          : const AssetImage('assets/images/Welcome.png') as ImageProvider,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -92,7 +94,8 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(_getTimeBasedGreeting(localizations), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-                          Text("${SharedPreference.instance.getString("first_name")} ${SharedPreference.instance.getString("last_name")}",
+                          Text(
+                            "${authUser?.firstName ?? ''} ${authUser?.lastName ?? ''}".trim(),
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                           ),
                         ],
@@ -261,23 +264,37 @@ class _HomePageState extends State<HomePage> {
                     return Column(
                       children: [
                         for (final p in places) ...[
-                          HealerCard(
-                            name: p.title,
-                            specialty: _cleanText(p.excerpt),
-                            location: p.location,
-                            language: p.language,
-                            imageUrl: p.featuredImage,
-                            isFavorite: p.isFavorite,
-                            onFavoriteToggle: () {
-                              // Map to your FavoriteHealer entity as needed
-                              // favoritesNotifier.toggleFavorite(...);
+                          GestureDetector(
+                            onTap: () {
+                              context.push(AppRoutes.healerDetail, extra: p);
                             },
+                            child: HealerCard(
+                              name: p.title,
+                              specialty: _cleanText(p.excerpt),
+                              location: p.location,
+                              language: p.language,
+                              imageUrl: p.featuredImage,
+                              isFavorite: p.isFavorite,
+                              heroTag: 'healer_${p.id}',
+                              onFavoriteToggle: () async {
+                                final favCtrl = ref.read(favoritesControllerProvider.notifier);
+                                final id = p.id.toString();
+                                if (p.isFavorite) {
+                                  await favCtrl.removeFavorite(id);
+                                } else {
+                                  await favCtrl.addFavorite(id);
+                                }
+                                // Refresh home list and favorites list
+                                ref.invalidate(placesProvider);
+                                await ref.read(favoritesControllerProvider.notifier).refresh();
+                              },
+                            ),
                           ),
                           const SizedBox(height: 24),
                         ]
                       ],
                     );
-                  },
+                  }
                 );
               },
             ),
@@ -314,6 +331,7 @@ class HealerCard extends StatelessWidget {
   final bool? isFavorite;
   final VoidCallback? onFavoriteToggle;
   final String? imageUrl;
+  final String? heroTag;
 
   const HealerCard({
     required this.name,
@@ -323,6 +341,7 @@ class HealerCard extends StatelessWidget {
     this.isFavorite,
     this.onFavoriteToggle,
     this.imageUrl,
+    this.heroTag,
   });
 
   @override
@@ -343,23 +362,44 @@ class HealerCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: imageUrl != null && imageUrl!.isNotEmpty
-                  ? Image.network(
-                      imageUrl!,
-                      width: 90,
-                      height: 90,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Image.asset(
-                        'assets/images/doctor.png',
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
-            ),
+            child: heroTag != null
+                ? Hero(
+                    tag: heroTag!,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: imageUrl != null && imageUrl!.isNotEmpty
+                          ? Image.network(
+                              imageUrl!,
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Image.asset(
+                                'assets/images/doctor.png',
+                                width: 90,
+                                height: 90,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
+                    ),
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: imageUrl != null && imageUrl!.isNotEmpty
+                        ? Image.network(
+                            imageUrl!,
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Image.asset(
+                              'assets/images/doctor.png',
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
+                  ),
           ),
 
           Expanded(

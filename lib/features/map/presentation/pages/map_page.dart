@@ -19,7 +19,7 @@ class _MapPageState extends ConsumerState<MapPage> {
   final ValueNotifier<String?> _errorText = ValueNotifier<String?>(null);
 
   InAppWebViewController? _controller;
-  late final PullToRefreshController _pullToRefreshController;
+  PullToRefreshController? _pullToRefreshController;
 
   @override
   void initState() {
@@ -42,7 +42,9 @@ class _MapPageState extends ConsumerState<MapPage> {
     _progress.dispose();
     _isLoading.dispose();
     _errorText.dispose();
-    _pullToRefreshController.dispose();
+    // Do not manually dispose PullToRefreshController; it's handled by InAppWebView.
+    // Set to null to avoid any further usages during teardown.
+    _pullToRefreshController = null;
     super.dispose();
   }
 
@@ -53,13 +55,19 @@ class _MapPageState extends ConsumerState<MapPage> {
 
   void _stopLoading() {
     _isLoading.value = false;
-    _pullToRefreshController.endRefreshing();
+    // Guard: controller may already be disposed by the platform view.
+    try {
+      _pullToRefreshController?.endRefreshing();
+    } catch (_) {}
   }
 
   void _setError(String message) {
     _errorText.value = message;
     _isLoading.value = false;
-    _pullToRefreshController.endRefreshing();
+    // Guard: controller may already be disposed by the platform view.
+    try {
+      _pullToRefreshController?.endRefreshing();
+    } catch (_) {}
   }
 
   void _ensureTimeoutFallback() {

@@ -83,6 +83,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
        SharedPreference.instance.setString('first_name', user.firstName);
        SharedPreference.instance.setString('last_name', user.lastName);
        SharedPreference.instance.setString('display_name', user.displayName);
+       SharedPreference.instance.setString('avatar_url', user.avatarUrl);
        SharedPreference.instance.setString('is_logged_in', 'true');
 
       // Save token if available

@@ -29,6 +29,7 @@ class AuthController extends AsyncNotifier<AuthUser?> {
 
       // Parse user data from response
       final data = response['data'] ?? response;
+      final dynamic rawAvatar = (data['avatar_url'] ?? data['avatar'] ?? data['image_url'] ?? data['profile_image'] ?? data['data']?['avatar_url'] ?? data['data']?['avatar'] ?? data['data']?['image_url'] ?? data['data']?['profile_image']);
       final user = AuthUser(
         id: (data['id'] ?? data['data']?['id'] ?? '0').toString(),
         username: (data['username'] ?? data['data']?['username'] ?? '').toString(),
@@ -38,6 +39,8 @@ class AuthController extends AsyncNotifier<AuthUser?> {
         displayName: (data['display_name'] ?? data['data']?['display_name'] ?? '').toString(),
         token: (data['token'] ?? data['data']?['token']).toString(),
         tokenExpires: data['token_expires'] ?? data['data']?['token_expires'],
+        avatarUrl: data['image'] ?? data['data']?['image'],
+
       );
 
       _cachedUser = user;
@@ -73,6 +76,7 @@ class AuthController extends AsyncNotifier<AuthUser?> {
 
       // Parse user data from response
       final data = response['data'] ?? response;
+      final dynamic rawAvatar = (data['avatar_url'] ?? data['avatar'] ?? data['image_url'] ?? data['profile_image'] ?? data['data']?['avatar_url'] ?? data['data']?['avatar'] ?? data['data']?['image_url'] ?? data['data']?['profile_image']);
       final user = AuthUser(
         id: (data['id'] ?? data['data']?['id'] ?? '0').toString(),
         username: (data['username'] ?? data['data']?['username'] ?? username).toString(),
@@ -80,6 +84,7 @@ class AuthController extends AsyncNotifier<AuthUser?> {
         firstName: (data['first_name'] ?? data['data']?['first_name'] ?? firstName).toString(),
         lastName: (data['last_name'] ?? data['data']?['last_name'] ?? lastName).toString(),
         displayName: (data['display_name'] ?? data['data']?['display_name'] ?? '$firstName $lastName').toString(),
+        avatarUrl: rawAvatar == null ? null : rawAvatar.toString(),
       );
 
       _cachedUser = user;
