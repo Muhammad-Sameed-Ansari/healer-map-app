@@ -45,5 +45,18 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- App Transport Security: allow external loads (can be narrowed to specific domains later) -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<!-- Usage descriptions for features the web page may request -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location is used to show your position on the map.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera may be used for in-page features.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone may be used for in-page features.</string>
 </dict>
 </plist>

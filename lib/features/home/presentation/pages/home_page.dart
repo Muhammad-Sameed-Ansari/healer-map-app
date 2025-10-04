@@ -6,7 +6,10 @@ import 'package:healer_map_flutter/core/utils/shared_pref_instance.dart';
 import 'package:healer_map_flutter/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:healer_map_flutter/core/constants/app_constants.dart';
 import 'package:healer_map_flutter/core/localization/app_localization.dart';
-import 'package:healer_map_flutter/features/favourite/presentation/providers/favorites_provider.dart';
+import 'package:healer_map_flutter/common/widgets/healer_card_skeleton.dart';
+import 'package:healer_map_flutter/features/home/presentation/providers/places_provider.dart';
+import 'package:healer_map_flutter/features/home/data/models/place.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +26,16 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _pageController = PageController();
+  }
+
+  // Basic cleaner for common HTML entities from API excerpts
+  String _cleanText(String input) {
+    return input
+        .replaceAll('&amp;', '&')
+        .replaceAll('&hellip;', '…')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('\u00a0', ' ')
+        .trim();
   }
 
   @override
@@ -62,7 +75,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 70,),
+            SizedBox(height: 55,),
             // Header with avatar, greeting and Add Business
             Consumer(
               builder: (context, ref, child) {
@@ -86,9 +99,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                      context.push(AppRoutes.search);
-                    },
+                      onPressed: ()async {
+                        // context.push(AppRoutes.search);
+                        await launchUrl(Uri.parse("https://healer-map.com/join/"));
+                      },
                       style: TextButton.styleFrom(
                         backgroundColor: ColorConstants.primary,
                         foregroundColor: ColorConstants.onPrimary,
@@ -211,29 +225,59 @@ class _HomePageState extends State<HomePage> {
             // Healer list
             Consumer(
               builder: (context, ref, child) {
-                final favoritesNotifier = ref.read(favoritesProvider.notifier);
+                final placesAsync = ref.watch(placesProvider);
 
-                return Column(
-                  children: [
-                    HealerCard(
-                      name: 'Dr. John',
-                      specialty: 'Dhaka medical (Neur specialist)',
-                      location: 'Magnolia, United States',
-                      language: 'English',
-                      isFavorite: favoritesNotifier.isFavorite('dr_john'),
-                      onFavoriteToggle: () {
-                        // final healer = FavoriteHealer.fromHealerCard(
-                        //   id: 'dr_john',
-                        //   name: 'Dr. John',
-                        //   specialty: 'Dhaka medical (Neur specialist)',
-                        //   location: 'Magnolia, United States',
-                        //   language: 'English',
-                        // );
-                        // favoritesNotifier.toggleFavorite(healer);
-                      },
+                return placesAsync.when(
+                  loading: () => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      children: const [
+                        ShimmerHealerCardSkeleton(),
+                        ShimmerHealerCardSkeleton(),
+                        ShimmerHealerCardSkeleton(),
+                        ShimmerHealerCardSkeleton(),
+                        ShimmerHealerCardSkeleton(),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                  ],
+                  ),
+                  error: (e, st) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'Failed to load healers',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red),
+                    ),
+                  ),
+                  data: (List<Place> places) {
+                    if (places.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Text(
+                          'No healers found',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        for (final p in places) ...[
+                          HealerCard(
+                            name: p.title,
+                            specialty: _cleanText(p.excerpt),
+                            location: p.location,
+                            language: p.language,
+                            imageUrl: p.featuredImage,
+                            isFavorite: p.isFavorite,
+                            onFavoriteToggle: () {
+                              // Map to your FavoriteHealer entity as needed
+                              // favoritesNotifier.toggleFavorite(...);
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                        ]
+                      ],
+                    );
+                  },
                 );
               },
             ),
@@ -269,6 +313,7 @@ class HealerCard extends StatelessWidget {
   final String language;
   final bool? isFavorite;
   final VoidCallback? onFavoriteToggle;
+  final String? imageUrl;
 
   const HealerCard({
     required this.name,
@@ -277,6 +322,7 @@ class HealerCard extends StatelessWidget {
     required this.language,
     this.isFavorite,
     this.onFavoriteToggle,
+    this.imageUrl,
   });
 
   @override
@@ -284,7 +330,7 @@ class HealerCard extends StatelessWidget {
     return Container(
       height: 110,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
+      // padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -295,43 +341,84 @@ class HealerCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                    ),
-                    IconButton(
-                      onPressed: onFavoriteToggle,
-                      icon: Icon(
-                        isFavorite == true ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite == true ? Colors.red : null,
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? Image.network(
+                      imageUrl!,
+                      width: 90,
+                      height: 90,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Image.asset(
+                        'assets/images/doctor.png',
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
                       ),
                     )
-                  ],
-                ),
-                Text(specialty, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
-                Spacer(),
-                Row(
-                  children: [
-                    const Icon(Icons.place, size: 16, color: Colors.purple),
-                    const SizedBox(width: 4),
-                    Expanded(child: Text(location, style: Theme.of(context).textTheme.bodySmall)),
-                    const SizedBox(width: 8),
-                    Image.asset("assets/icons/profile_language.png",height: 18,color: Colors.purple,),
-                    const SizedBox(width: 4),
-                    Text(language, style: Theme.of(context).textTheme.bodySmall),
-                  ],
-                )
-              ],
+                  : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
+            ),
+          ),
+
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12.0,bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis,style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                      ),
+                      IconButton(
+                        onPressed: onFavoriteToggle,
+                        icon: Icon(
+                          isFavorite == true ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite == true ? Colors.red : null,
+                        ),
+                      )
+                    ],
+                  ),
+                  Text(
+                    specialty,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54,fontSize: 10),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.place, size: 14, color: Colors.purple),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Text(
+                          location,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Image.asset("assets/icons/profile_language.png",height: 14,color: Colors.purple,),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          language,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
             ),
           )
         ],

@@ -98,12 +98,20 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   color: ColorConstants.primary,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 6)),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
                   ],
                 ),
                 child: IconButton(
                   onPressed: _showFilterBottomSheet,
-                  icon: Image.asset("assets/icons/filter.png",height: 20,width: 20,),
+                  icon: Image.asset(
+                    "assets/icons/filter.png",
+                    height: 20,
+                    width: 20,
+                  ),
                 ),
               ),
               const SizedBox(width: 20),
@@ -137,21 +145,27 @@ class SearchResultsList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Mock search results - in real app, this would come from API/state management
     final mockResults = [
-      if (searchQuery.isEmpty || searchQuery.toLowerCase().contains('dr') || searchQuery.toLowerCase().contains('john'))
+      if (searchQuery.isEmpty ||
+          searchQuery.toLowerCase().contains('dr') ||
+          searchQuery.toLowerCase().contains('john'))
         const HealerCard(
           name: 'Dr. John',
           specialty: 'Dhaka medical (Neur specialist)',
           location: 'Magnolia, United States',
           language: 'English',
         ),
-      if (searchQuery.isEmpty || searchQuery.toLowerCase().contains('dr') || searchQuery.toLowerCase().contains('karuk'))
+      if (searchQuery.isEmpty ||
+          searchQuery.toLowerCase().contains('dr') ||
+          searchQuery.toLowerCase().contains('karuk'))
         const HealerCard(
           name: 'Dr. Karuk',
           specialty: 'Dhaka medical (Neur specialist)',
           location: 'Magnolia, United States',
           language: 'English',
         ),
-      if (searchQuery.isEmpty || searchQuery.toLowerCase().contains('dr') || searchQuery.toLowerCase().contains('erann'))
+      if (searchQuery.isEmpty ||
+          searchQuery.toLowerCase().contains('dr') ||
+          searchQuery.toLowerCase().contains('erann'))
         const HealerCard(
           name: 'Dr. Erann',
           specialty: 'Dhaka medical (Neur specialist)',
@@ -165,26 +179,22 @@ class SearchResultsList extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.search, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No healers found',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             Text(
               hasActiveFilters
                   ? 'Try adjusting your filters or search terms'
                   : 'Try searching for a healer name or specialty',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[500],
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -252,151 +262,194 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           // Title
           Text(
             'Filters',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 24),
 
           // Filter Content
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // First Category: Animal or Human - Visual Selection
-                  Text(
-                    'Patient Type',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // First Category: Animal or Human - Visual Selection
+                Text(
+                  'Patient Type',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _PatientTypeCard(
+                        title: 'Human',
+                        icon: Icons.person,
+                        isSelected: selectedPatientType == 'human',
+                        onTap: () {
+                          setState(() {
+                            selectedPatientType = 'human';
+                          });
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PatientTypeCard(
-                          title: 'Human',
-                          icon: Icons.person,
-                          isSelected: selectedPatientType == 'human',
-                          onTap: () {
-                            setState(() {
-                              selectedPatientType = 'human';
-                            });
-                          },
-                        ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _PatientTypeCard(
+                        title: 'Animal',
+                        icon: Icons.pets,
+                        isSelected: selectedPatientType == 'animal',
+                        onTap: () {
+                          setState(() {
+                            selectedPatientType = 'animal';
+                          });
+                        },
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _PatientTypeCard(
-                          title: 'Animal',
-                          icon: Icons.pets,
-                          isSelected: selectedPatientType == 'animal',
-                          onTap: () {
-                            setState(() {
-                              selectedPatientType = 'animal';
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  CustomDropdownFormField<String>(
-                    isForm: true,
-                    title: 'Service Category',
-                    value: selectedMajorCategory2,
-                    hintText: 'Select Service Category',
-                    items: [
-                      const DropdownMenuItem(value: 'medical', child: Text('Medical Services')),
-                      const DropdownMenuItem(value: 'therapy', child: Text('Therapy Services')),
-                      const DropdownMenuItem(value: 'wellness', child: Text('Wellness Services')),
-                      const DropdownMenuItem(value: 'consultation', child: Text('Consultation')),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        selectedMajorCategory2 = value;
-                      });
-                    },
-                  ),
-
-                  CustomDropdownFormField<String>(
-                    isForm: true,
-                    title: 'Language',
-                    value: selectedLanguage,
-                    hintText: 'Select Language',
-                    items: [
-                      const DropdownMenuItem(value: 'english', child: Text('English')),
-                      const DropdownMenuItem(value: 'spanish', child: Text('Spanish')),
-                      const DropdownMenuItem(value: 'french', child: Text('French')),
-                      const DropdownMenuItem(value: 'german', child: Text('German')),
-                      const DropdownMenuItem(value: 'arabic', child: Text('Arabic')),
-                      const DropdownMenuItem(value: 'hindi', child: Text('Hindi')),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        selectedLanguage = value;
-                      });
-                    },
-                  ),
-
-                  CustomDropdownFormField<String>(
-                    isForm: true,
-                    title: 'Distance',
-                    value: selectedDistance,
-                    hintText: 'Select Distance',
-                    items: [
-                      const DropdownMenuItem(value: '5', child: Text('Within 5 km')),
-                      const DropdownMenuItem(value: '10', child: Text('Within 10 km')),
-                      const DropdownMenuItem(value: '25', child: Text('Within 25 km')),
-                      const DropdownMenuItem(value: '50', child: Text('Within 50 km')),
-                      const DropdownMenuItem(value: '100', child: Text('Within 100 km')),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        selectedDistance = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Checkboxes
-                  Text(
-                    'Preferences',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
                     ),
+                  ],
+                ),
+                CustomDropdownFormField<String>(
+                  isForm: true,
+                  title: 'Service Category',
+                  value: selectedMajorCategory2,
+                  hintText: 'Select Service Category',
+                  items: [
+                    const DropdownMenuItem(
+                      value: 'medical',
+                      child: Text('Medical Services'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'therapy',
+                      child: Text('Therapy Services'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'wellness',
+                      child: Text('Wellness Services'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'consultation',
+                      child: Text('Consultation'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedMajorCategory2 = value;
+                    });
+                  },
+                ),
+
+                CustomDropdownFormField<String>(
+                  isForm: true,
+                  title: 'Language',
+                  value: selectedLanguage,
+                  hintText: 'Select Language',
+                  items: [
+                    const DropdownMenuItem(
+                      value: 'english',
+                      child: Text('English'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'spanish',
+                      child: Text('Spanish'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'french',
+                      child: Text('French'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'german',
+                      child: Text('German'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'arabic',
+                      child: Text('Arabic'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'hindi',
+                      child: Text('Hindi'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedLanguage = value;
+                    });
+                  },
+                ),
+
+                CustomDropdownFormField<String>(
+                  isForm: true,
+                  title: 'Distance',
+                  value: selectedDistance,
+                  hintText: 'Select Distance',
+                  items: [
+                    const DropdownMenuItem(
+                      value: '5',
+                      child: Text('Within 5 km'),
+                    ),
+                    const DropdownMenuItem(
+                      value: '10',
+                      child: Text('Within 10 km'),
+                    ),
+                    const DropdownMenuItem(
+                      value: '25',
+                      child: Text('Within 25 km'),
+                    ),
+                    const DropdownMenuItem(
+                      value: '50',
+                      child: Text('Within 50 km'),
+                    ),
+                    const DropdownMenuItem(
+                      value: '100',
+                      child: Text('Within 100 km'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedDistance = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // Checkboxes
+                Text(
+                  'Preferences',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _CustomCheckbox(
-                          title: 'Near to me',
-                          value: nearToMe,
-                          onChanged: (value) {
-                            setState(() {
-                              nearToMe = value!;
-                            });
-                          },
-                        ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _CustomCheckbox(
+                        title: 'Near to me',
+                        value: nearToMe,
+                        onChanged: (value) {
+                          setState(() {
+                            nearToMe = value!;
+                          });
+                        },
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _CustomCheckbox(
-                          title: 'Barter Agreement',
-                          value: barterAgreement,
-                          onChanged: (value) {
-                            setState(() {
-                              barterAgreement = value!;
-                            });
-                          },
-                        ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _CustomCheckbox(
+                        title: 'Barter Agreement',
+                        value: barterAgreement,
+                        onChanged: (value) {
+                          setState(() {
+                            barterAgreement = value!;
+                          });
+                        },
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+              ],
             ),
           ),
 
@@ -449,7 +502,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       ),
     );
   }
-
 }
 
 class _CustomCheckbox extends StatelessWidget {
@@ -521,7 +573,9 @@ class _PatientTypeCard extends StatelessWidget {
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: isSelected ? ColorConstants.primary.withOpacity(0.1) : Colors.white,
+          color: isSelected
+              ? ColorConstants.primary.withOpacity(0.1)
+              : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? ColorConstants.primary : Colors.grey[300]!,

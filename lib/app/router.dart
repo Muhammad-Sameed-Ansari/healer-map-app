@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:healer_map_flutter/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:healer_map_flutter/features/auth/presentation/pages/login_page.dart';
 import 'package:healer_map_flutter/features/auth/presentation/pages/signup_page.dart';
 import 'package:healer_map_flutter/features/auth/presentation/pages/splash_page.dart';
 import 'package:healer_map_flutter/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:healer_map_flutter/features/favourite/presentation/pages/favourite_page.dart';
 import 'package:healer_map_flutter/features/home/presentation/pages/search_page.dart';
+import 'package:healer_map_flutter/features/map/presentation/pages/map_page.dart';
 import 'package:healer_map_flutter/features/profile/presentation/pages/edit_profile_page.dart';
 
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/profile/presentation/pages/change_language_page.dart';
+import 'package:healer_map_flutter/features/blog/presentation/pages/blog_detail_page.dart';
+import 'package:healer_map_flutter/features/blog/data/models/blog_post.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -26,10 +28,10 @@ class AppRoutes {
   static const favorite = '/favorite';
   static const search = '/search';
   static const editProfile = '/edit-profile';
+  static const blogDetail = '/blog-detail';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.splash,
@@ -70,6 +72,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.search,
         builder: (context, state) => const SearchPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.blogDetail,
+        builder: (context, state) {
+          final post = state.extra as BlogPost;
+          return BlogDetailPage(post: post);
+        },
       ),
     ],
   );

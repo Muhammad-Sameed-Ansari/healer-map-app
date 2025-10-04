@@ -20,8 +20,8 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController(text: 'johndoe@123');
-  final _passwordCtrl = TextEditingController(text: '12345678');
+  final _emailCtrl = TextEditingController(text: 'talha');
+  final _passwordCtrl = TextEditingController(text: 'talha@23');
   bool _rememberMe = false;
 
   @override
@@ -145,7 +145,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               CustomTextFormField(
                 title: localizations.email,
                 controller: _emailCtrl,
-                textFormFieldType: TextFormFieldType.email,
+                textFormFieldType: TextFormFieldType.text,
                 textInputType: TextInputType.emailAddress,
                 isForm: true,
                 isRequired: true,

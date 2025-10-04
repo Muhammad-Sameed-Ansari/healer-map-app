@@ -21,7 +21,6 @@ version: 1.0.0+1
 environment:
   sdk: ^3.9.0
 
-# Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
 # dependencies can be manually updated by changing the version numbers below to
@@ -46,12 +45,13 @@ dependencies:
   country_picker: ^2.0.27
   shared_preferences: ^2.5.3
   image_picker: ^1.2.0
+  flutter_inappwebview: ^6.1.5
+  shimmer: ^3.0.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint

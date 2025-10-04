@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healer_map_flutter/app/router.dart';
+import 'package:healer_map_flutter/core/network/dio_client.dart';
 import 'package:healer_map_flutter/core/utils/shared_pref_instance.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,6 +38,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       if (!mounted) return;
 
       if (hasValidToken) {
+        DioClient.instance.setToken("$token");
         context.go(AppRoutes.home);
       } else {
         context.go(AppRoutes.login);
