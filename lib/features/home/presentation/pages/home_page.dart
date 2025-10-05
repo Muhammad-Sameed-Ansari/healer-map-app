@@ -9,6 +9,7 @@ import 'package:healer_map_flutter/common/widgets/healer_card_skeleton.dart';
 import 'package:healer_map_flutter/features/home/presentation/providers/places_provider.dart';
 import 'package:healer_map_flutter/features/home/data/models/place.dart';
 import 'package:healer_map_flutter/features/favourite/presentation/controllers/favorites_controller.dart';
+import 'package:healer_map_flutter/features/site_info/presentation/providers/site_info_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,6 +22,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late PageController _pageController;
   int _currentPage = 0;
+  // Optimistic favorite overrides: placeId -> isFavorite
+  final Map<int, bool> _favOverrides = {};
 
   @override
   void initState() {
@@ -79,6 +82,8 @@ class _HomePageState extends State<HomePage> {
             // Header with avatar, greeting and Add Business
             Consumer(
               builder: (context, ref, child) {
+                // Prefetch site-info so filters have data ready
+                ref.watch(siteInfoProvider);
                 final authUser = ref.watch(authControllerProvider).value;
                 return Row(
                   children: [
@@ -219,7 +224,9 @@ class _HomePageState extends State<HomePage> {
                 Text(localizations.healers, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
                 const Spacer(),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    context.push(AppRoutes.search);
+                  },
                   child: Text(localizations.seeAll),
                 )
               ],
@@ -274,19 +281,49 @@ class _HomePageState extends State<HomePage> {
                               location: p.location,
                               language: p.language,
                               imageUrl: p.featuredImage,
-                              isFavorite: p.isFavorite,
+                              isFavorite: _favOverrides[p.id] ?? p.isFavorite,
                               heroTag: 'healer_${p.id}',
                               onFavoriteToggle: () async {
                                 final favCtrl = ref.read(favoritesControllerProvider.notifier);
                                 final id = p.id.toString();
-                                if (p.isFavorite) {
-                                  await favCtrl.removeFavorite(id);
-                                } else {
-                                  await favCtrl.addFavorite(id);
+                                final previous = _favOverrides.containsKey(p.id)
+                                    ? _favOverrides[p.id]!
+                                    : p.isFavorite;
+                                final next = !previous;
+                                setState(() {
+                                  _favOverrides[p.id] = next; // Optimistic UI
+                                });
+                                try {
+                                  bool ok;
+                                  if (next) {
+                                    ok = await favCtrl.addFavorite(id);
+                                  } else {
+                                    ok = await favCtrl.removeFavorite(id);
+                                  }
+                                  if (!ok) {
+                                    // Revert and inform user on failure
+                                    setState(() {
+                                      _favOverrides[p.id] = previous;
+                                    });
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(next ? 'Failed to add to favorites' : 'Failed to remove from favorites')),
+                                      );
+                                    }
+                                  }
+                                } catch (e) {
+                                  // Revert on exception
+                                  setState(() {
+                                    _favOverrides[p.id] = previous;
+                                  });
+                                } finally {
+                                  // Refresh lists from API so UI reflects server state
+                                  ref.invalidate(placesProvider);
+                                  try {
+                                    await ref.read(placesProvider.future);
+                                  } catch (_) {}
+                                  await ref.read(favoritesControllerProvider.notifier).refresh();
                                 }
-                                // Refresh home list and favorites list
-                                ref.invalidate(placesProvider);
-                                await ref.read(favoritesControllerProvider.notifier).refresh();
                               },
                             ),
                           ),

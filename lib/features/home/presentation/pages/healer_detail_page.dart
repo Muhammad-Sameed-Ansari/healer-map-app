@@ -6,25 +6,43 @@ import 'package:healer_map_flutter/common/widgets/custom_button.dart';
 import 'package:healer_map_flutter/features/home/data/models/place.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:healer_map_flutter/features/favourite/presentation/controllers/favorites_controller.dart';
+import 'package:healer_map_flutter/features/home/presentation/providers/places_provider.dart';
+import 'package:healer_map_flutter/features/home/presentation/providers/place_detail_provider.dart';
+import 'package:healer_map_flutter/features/home/data/models/place_detail.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:healer_map_flutter/features/home/data/repositories/places_repository.dart';
 
-class HealerDetailPage extends StatefulWidget {
+class HealerDetailPage extends ConsumerStatefulWidget {
   final Place place;
   const HealerDetailPage({super.key, required this.place});
 
   @override
-  State<HealerDetailPage> createState() => _HealerDetailPageState();
+  ConsumerState<HealerDetailPage> createState() => _HealerDetailPageState();
 }
 
-class _HealerDetailPageState extends State<HealerDetailPage> {
+class _HealerDetailPageState extends ConsumerState<HealerDetailPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _messageController = TextEditingController();
+  late bool _isFavorite;
+  double _userRating = 0.0; // supports halves
+  final TextEditingController _reviewController = TextEditingController();
+  bool _postingReview = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFavorite = widget.place.isFavorite;
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _messageController.dispose();
+    _reviewController.dispose();
     super.dispose();
   }
 
@@ -59,6 +77,8 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
   @override
   Widget build(BuildContext context) {
     final p = widget.place;
+    final detailAsync = ref.watch(placeDetailProvider(p.id));
+    final PlaceDetail? detail = detailAsync.value;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -78,14 +98,14 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Image.asset(
                         'assets/images/doctor.png',
-                        height: 230,
+                        height: 450,
                         width: double.infinity,
                         fit: BoxFit.cover,
                       ),
                     )
                   : Image.asset(
                       'assets/images/doctor.png',
-                      height: 230,
+                      height: 450,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
@@ -118,15 +138,51 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                             ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          ...List.generate(5, (i) => Icon(i < 4 ? Icons.star : Icons.star_half, size: 16, color: Colors.amber)),
-                          const SizedBox(width: 6),
-                          Text('4.5', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(width: 4),
-                          Text('Ratings', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45)),
-                        ],
-                      ),
+                      Builder(builder: (context) {
+                        return detailAsync.when(
+                          loading: () => Shimmer.fromColors(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor: Colors.grey.shade100,
+                            child: Row(
+                              children: [
+                                Container(height: 14, width: 90, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                              ],
+                            ),
+                          ),
+                          error: (e, st) => Row(
+                            children: const [
+                              Icon(Icons.star_border, size: 16, color: Colors.amber),
+                              SizedBox(width: 6),
+                              Text('-'),
+                            ],
+                          ),
+                          data: (d) {
+                            final rating = double.tryParse(d?.rating ?? '') ?? 0.0;
+                            final reviews = int.tryParse(d?.reviews ?? '') ?? 0;
+                            final full = rating.floor().clamp(0, 5);
+                            final hasHalf = (rating - full) >= 0.5 && full < 5;
+                            final stars = <Widget>[];
+                            for (int i = 0; i < full; i++) {
+                              stars.add(const Icon(Icons.star, size: 16, color: Colors.amber));
+                            }
+                            if (hasHalf) {
+                              stars.add(const Icon(Icons.star_half, size: 16, color: Colors.amber));
+                            }
+                            while (stars.length < 5) {
+                              stars.add(const Icon(Icons.star_border, size: 16, color: Colors.amber));
+                            }
+                            return Row(
+                              children: [
+                                ...stars,
+                                const SizedBox(width: 6),
+                                Text(rating.toStringAsFixed(1), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                const SizedBox(width: 4),
+                                Text('(${reviews.toString()})', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45)),
+                              ],
+                            );
+                          },
+                        );
+                      }),
                       const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,7 +201,7 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.translate, size: 18, color: Color(0xFF7B3A8E)),
+                            Image.asset("assets/icons/profile_language.png",height: 18,color: Colors.purple,),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -175,9 +231,16 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Session types row (using remaining categories as placeholder if provided)
-                        if (p.category.isNotEmpty)
-                          RichText(
+                        // Session types row (from detail.typeOfAppointment)
+                        Builder(builder: (context) {
+                          final types = (detail != null && detail.typeOfAppointment != null && detail.typeOfAppointment!.isNotEmpty)
+                              ? detail.typeOfAppointment!
+                                  .split(',')
+                                  .map((e) => e.trim())
+                                  .where((e) => e.isNotEmpty)
+                                  .join(', ')
+                              : '';
+                          return RichText(
                             text: TextSpan(
                               children: [
                                 TextSpan(
@@ -188,14 +251,13 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                                       ),
                                 ),
                                 TextSpan(
-                                  text: (p.category.length > 1
-                                      ? p.category.sublist(1).join(', ')
-                                      : '—'),
+                                  text: types.isNotEmpty ? types : '—',
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                                 ),
                               ],
                             ),
-                          ),
+                          );
+                        }),
                       const SizedBox(height: 10),
 
                       // About (shadow card, no border)
@@ -213,7 +275,11 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                           ],
                         ),
                         child: Text(
-                          _cleanText(p.excerpt).isEmpty ? 'No description available.' : _cleanText(p.excerpt),
+                          (() {
+                            final about = (detail != null && detail.content.isNotEmpty) ? detail.content : p.excerpt;
+                            final cleaned = _cleanText(about);
+                            return cleaned.isEmpty ? 'No description available.' : cleaned;
+                          })(),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
@@ -256,25 +322,35 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                       ),
 
                       const SizedBox(height: 20),
-                      // Services section
+                      // Services section (use detail.tags when available, otherwise fallback to p.category)
                       Text('Services', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: p.category
-                            .map((c) => Row(
-                          mainAxisSize: MainAxisSize.min,
+                      Builder(builder: (context) {
+                        final List<String> services = (detail != null && detail.tags.isNotEmpty)
+                            ? detail.tags
+                            : p.category;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.check_circle, color: Color(0xFF4A184B), size: 18),
-                            const SizedBox(width: 6),
-                            Text(c),
+                            for (final c in services) ...[
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.check_circle, color: Color(0xFF4A184B), size: 18),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      c,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                            ],
                           ],
-                        ))
-                            .toList(),
-                      ),
-
-                      const SizedBox(height: 20),
+                        );
+                      }),
                       // Map card
                       Text('Map', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
@@ -294,7 +370,7 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                               thirdPartyCookiesEnabled: true,
                               geolocationEnabled: true,
                             ),
-                            initialUrlRequest: URLRequest(url: WebUri('https://healer-map.com/hm-map-view/')),
+                            initialUrlRequest: URLRequest(url: WebUri('https://healer-map.com/hm-map-view/${widget.place.id}')),
                           ),
                         ),
                       ),
@@ -307,26 +383,72 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                       ),
 
                       const SizedBox(height: 20),
-                      // Reviews header
-                      Row(
-                        children: [
-                          Text('Review', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.star, size: 18, color: Colors.amber),
-                          const SizedBox(width: 4),
-                          Text('4.9 (34)', style: Theme.of(context).textTheme.bodyMedium),
-                          const Spacer(),
-                          TextButton(onPressed: () {}, child: const Text('VIEW ALL')),
-                        ],
-                      ),
-                      _ReviewTile(
-                        name: 'Mosarraf hosain',
-                        timeAgo: '1 day ago',
-                        rating: 5,
-                        comment: 'Dr. Muhammad is really a nice Doctor. He is very careful & responsible.',
-                      ),
-                      const SizedBox(height: 12),
-                      // Rating selector placeholder
+                      // Reviews header + list from API
+                      Builder(builder: (context) {
+                        return detailAsync.when(
+                          loading: () => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Column(
+                              children: [
+                                Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade300,
+                                  highlightColor: Colors.grey.shade100,
+                                  child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                                ),
+                                const SizedBox(height: 8),
+                                Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade300,
+                                  highlightColor: Colors.grey.shade100,
+                                  child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                                ),
+                                const SizedBox(height: 8),
+                                Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade300,
+                                  highlightColor: Colors.grey.shade100,
+                                  child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                                ),
+                              ],
+                            ),
+                          ),
+                          error: (e, st) => const SizedBox.shrink(),
+                          data: (d) {
+                            if (d == null) return const SizedBox.shrink();
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Text('Reviews', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.star, size: 18, color: Colors.amber),
+                                    const SizedBox(width: 4),
+                                    Text('${d.rating ?? '-'} (${d.reviews ?? '0'})', style: Theme.of(context).textTheme.bodyMedium),
+                                    const Spacer(),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                if (d.allReviews.isEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                    child: Text('No reviews yet', style: Theme.of(context).textTheme.bodySmall),
+                                  )
+                                else ...[
+                                  for (final r in d.allReviews) ...[
+                                    _ReviewTile(
+                                      name: r.author,
+                                      timeAgo: r.date,
+                                      rating: int.tryParse(r.rating) ?? 0,
+                                      comment: r.content,
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                ],
+                              ],
+                            );
+                          },
+                        );
+                      }),
+
+                      // Rating selector (interactive, supports half-stars)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
@@ -334,10 +456,35 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                           border: Border.all(color: Colors.black12),
                         ),
                         child: Row(
-                          children: const [
-                            Icon(Icons.star, color: Colors.amber),
-                            SizedBox(width: 8),
-                            Text('Select a rating'),
+                          children: [
+                            Row(
+                              children: List.generate(5, (i) {
+                                  final base = i + 1;
+                                  IconData icon;
+                                  if (_userRating >= base) {
+                                    icon = Icons.star;
+                                  } else if (_userRating >= base - 0.5) {
+                                    icon = Icons.star_half;
+                                  } else {
+                                    icon = Icons.star_border;
+                                  }
+                                  return GestureDetector(
+                                    onTapDown: (details) {
+                                      final localX = details.localPosition.dx;
+                                      final half = localX < 12; // approx half width
+                                      setState(() {
+                                        _userRating = half ? (i + 0.5) : (i + 1).toDouble();
+                                      });
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                                      child: Icon(icon, color: Colors.amber, size: 22),
+                                    ),
+                                  );
+                                }),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(_userRating == 0 ? 'Select a rating' : _userRating.toStringAsFixed(1)),
                           ],
                         ),
                       ),
@@ -351,16 +498,61 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
                         multiLine: true,
                         isForm: false,
                         borderRadius: 12,
+                        controller: _reviewController,
                       ),
                       const SizedBox(height: 10),
                       CustomAppButton(
                         width: double.infinity,
                         height: 48,
                         title: 'POST REVIEW',
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Review posted')),
-                          );
+                        loader: _postingReview,
+                        onPressed: () async {
+                          setState(() => _postingReview = true);
+                          if (_userRating == 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please select a rating')),
+                            );
+                            setState(() => _postingReview = false);
+                            return;
+                          }
+                          if (_reviewController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please write a review message')),
+                            );
+                            setState(() => _postingReview = false);
+                            return;
+                          }
+
+                          // Submit review via repository
+                          final repo = ref.read(placesRepositoryProvider);
+                          try {
+                            final SubmitReviewResult result = await repo.submitPlaceReview(
+                              id: widget.place.id,
+                              rating: _userRating,
+                              content: _reviewController.text.trim(),
+                            );
+                            if (!mounted) return;
+                            if (result.success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(result.message),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              _reviewController.clear();
+                              setState(() {
+                                _userRating = 0.0;
+                              });
+                              // Refresh details to show the new review
+                              ref.invalidate(placeDetailProvider(widget.place.id));
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(result.message)),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => _postingReview = false);
+                          }
                         },
                       ),
                       const SizedBox(height: 24),
@@ -384,8 +576,44 @@ class _HealerDetailPageState extends State<HealerDetailPage> {
             top: 50,
             right: 25,
             child: _HeaderActionButton(
-              icon: Icons.favorite_border,
-              onTap: () {},
+              icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
+              onTap: () async {
+                final favCtrl = ref.read(favoritesControllerProvider.notifier);
+                final id = widget.place.id.toString();
+                final next = !_isFavorite;
+                setState(() {
+                  _isFavorite = next; // Optimistic UI
+                });
+                try {
+                  bool ok;
+                  if (next) {
+                    ok = await favCtrl.addFavorite(id);
+                  } else {
+                    ok = await favCtrl.removeFavorite(id);
+                  }
+                  if (!ok) {
+                    setState(() {
+                      _isFavorite = !next; // revert
+                    });
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(next ? 'Failed to add to favorites' : 'Failed to remove from favorites')),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  setState(() {
+                    _isFavorite = !next; // revert
+                  });
+                } finally {
+                  // Refresh lists so server truth syncs
+                  ref.invalidate(placesProvider);
+                  try {
+                    await ref.read(placesProvider.future);
+                  } catch (_) {}
+                  await ref.read(favoritesControllerProvider.notifier).refresh();
+                }
+              },
             ),
           ),
         ],
@@ -401,17 +629,23 @@ class _HeaderActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withOpacity(0.6),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
+    return Container(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(
-            child: Icon(icon, color: Colors.black87, size: 20),
+        border: Border.all(color: Colors.grey,width: 0.3)
+      ),
+      child: Material(
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+              child: Icon(icon, color: icon==Icons.favorite?Colors.red:Colors.black87, size: 20),
+            ),
           ),
         ),
       ),

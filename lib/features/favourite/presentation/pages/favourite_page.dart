@@ -7,6 +7,8 @@ import 'package:healer_map_flutter/app/router.dart';
 import 'package:healer_map_flutter/features/favourite/presentation/controllers/favorites_controller.dart';
 import 'package:healer_map_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:healer_map_flutter/features/home/data/models/place.dart';
+import 'package:healer_map_flutter/common/widgets/healer_card_skeleton.dart';
+import 'package:healer_map_flutter/features/home/presentation/providers/places_provider.dart';
 
 class FavouritePage extends ConsumerWidget {
   const FavouritePage({super.key});
@@ -30,7 +32,11 @@ class FavoritesListView extends ConsumerWidget {
     final asyncFavorites = ref.watch(favoritesControllerProvider);
 
     return asyncFavorites.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => ListView.builder(
+        padding: const EdgeInsets.all(10),
+        itemCount: 6,
+        itemBuilder: (context, index) => const ShimmerHealerCardSkeleton(),
+      ),
       error: (err, st) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -61,12 +67,6 @@ class FavoritesListView extends ConsumerWidget {
                   'No favorite healers yet',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tap the heart icon on healer cards to add them to favorites',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
-                  textAlign: TextAlign.center,
-                ),
               ],
             ),
           );
@@ -92,8 +92,17 @@ class FavoritesListView extends ConsumerWidget {
                       isFavorite: true,
                       heroTag: 'healer_${f.id}',
                       onFavoriteToggle: () async {
-                        // Remove from favorites
-                        await ref.read(favoritesControllerProvider.notifier).removeFavorite(f.id);
+                        // Optimistic remove (controller updates state immediately). Show feedback on failure.
+                        final ok = await ref.read(favoritesControllerProvider.notifier).removeFavorite(f.id);
+                        if (ok) {
+                          // Ensure Home's places list refreshes from API
+                          ref.invalidate(placesProvider);
+                        }
+                        if (!ok && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Failed to remove from favorites')),
+                          );
+                        }
                       },
                     ),
                   ),
@@ -121,3 +130,4 @@ Place _toPlace(f) {
     isFavorite: true,
   );
 }
+
