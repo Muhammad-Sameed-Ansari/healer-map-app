@@ -82,6 +82,26 @@ class PlacesRepository {
     return const SubmitReviewResult(success: false, message: 'Unexpected response');
   }
 
+  Future<SubmitReviewResult> submitPlaceMessage({
+    required int id,
+    required String name,
+    required String email,
+    required String message,
+  }) async {
+    final Response? res = await _client.post('place/$id/submit', data: {
+      'name': name,
+      'email': email,
+      'message': message,
+    });
+    if (res == null) return const SubmitReviewResult(success: false, message: 'No response');
+    final data = res.data;
+    if (data is Map<String, dynamic>) {
+      final bool status = data['status'] == true;
+      final String msg = (data['message'] ?? '').toString().trim();
+      return SubmitReviewResult(success: status, message: msg.isEmpty ? (status ? 'Submitted' : 'Failed to submit') : msg);
+    }
+    return const SubmitReviewResult(success: false, message: 'Unexpected response');
+  }
 }
 
 class SubmitReviewResult {

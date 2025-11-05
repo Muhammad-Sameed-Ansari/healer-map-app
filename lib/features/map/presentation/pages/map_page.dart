@@ -17,6 +17,7 @@ class _MapPageState extends ConsumerState<MapPage> {
   final ValueNotifier<double> _progress = ValueNotifier<double>(0);
   final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(true);
   final ValueNotifier<String?> _errorText = ValueNotifier<String?>(null);
+  final ValueNotifier<bool> _canGoBack = ValueNotifier<bool>(false);
 
   InAppWebViewController? _controller;
   PullToRefreshController? _pullToRefreshController;
@@ -42,6 +43,7 @@ class _MapPageState extends ConsumerState<MapPage> {
     _progress.dispose();
     _isLoading.dispose();
     _errorText.dispose();
+    _canGoBack.dispose();
     // Do not manually dispose PullToRefreshController; it's handled by InAppWebView.
     // Set to null to avoid any further usages during teardown.
     _pullToRefreshController = null;
@@ -79,12 +81,43 @@ class _MapPageState extends ConsumerState<MapPage> {
     });
   }
 
+  Future<void> _updateCanGoBack() async {
+    if (_controller != null) {
+      _canGoBack.value = await _controller!.canGoBack();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
 
     return AppScaffold(
       title: localizations.map,
+      leading: ValueListenableBuilder<bool>(
+        valueListenable: _canGoBack,
+        builder: (context, canGoBack, _) {
+          if (!canGoBack) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22, color: Colors.black),
+                onPressed: () async {
+                  if (_controller != null && await _controller!.canGoBack()) {
+                    await _controller!.goBack();
+                  }
+                },
+                tooltip: 'Back',
+              ),
+            ),
+          );
+        },
+      ),
       actions: [
         ValueListenableBuilder<double>(
           valueListenable: _progress,
@@ -131,6 +164,7 @@ class _MapPageState extends ConsumerState<MapPage> {
             },
             onLoadStop: (controller, url) async {
               _stopLoading();
+              await _updateCanGoBack();
             },
             onProgressChanged: (controller, p) {
               _progress.value = p / 100.0;

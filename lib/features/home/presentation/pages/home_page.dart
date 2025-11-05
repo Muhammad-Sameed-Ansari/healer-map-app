@@ -65,11 +65,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
-    final List<String> bannerImages = [
-      'assets/images/banner1.png',
-      'assets/images/banner1.png',
-      'assets/images/banner1.png', // Add more images as needed
-    ];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -173,50 +168,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // Carousel
-            SizedBox(
-              height: 200,
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: bannerImages.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      image: DecorationImage(
-                        image: AssetImage(bannerImages[index]),
-                        // fit: BoxFit.cover,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
             const SizedBox(height: 8),
-            // Dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(bannerImages.length, (index) {
-                return GestureDetector(
-                  onTap: () {
-                    _pageController.animateToPage(
-                      index,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                  child: _Dot(active: _currentPage == index),
-                );
-              }),
-            ),
-            const SizedBox(height: 16),
 
             // Section header
             Row(

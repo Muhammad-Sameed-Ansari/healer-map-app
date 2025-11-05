@@ -490,7 +490,7 @@ class ProfilePage extends ConsumerWidget {
             const SizedBox(height: 16),
             // Username handle style
             Text(
-              '@${(user?.name ?? 'guest').replaceAll(' ', '_')}',
+              '@${(user?.username ?? 'guest')}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: Colors.black,

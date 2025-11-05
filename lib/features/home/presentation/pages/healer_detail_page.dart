@@ -30,6 +30,7 @@ class _HealerDetailPageState extends ConsumerState<HealerDetailPage> {
   double _userRating = 0.0; // supports halves
   final TextEditingController _reviewController = TextEditingController();
   bool _postingReview = false;
+  bool _postingMessage = false;
 
   @override
   void initState() {
@@ -314,10 +315,44 @@ class _HealerDetailPageState extends ConsumerState<HealerDetailPage> {
                         width: double.infinity,
                         height: 48,
                         title: 'SUBMIT',
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Your message has been submitted.')),
-                          );
+                        loader: _postingMessage,
+                        onPressed: () async {
+                          setState(() => _postingMessage = true);
+                          final name = _nameController.text.trim();
+                          final email = _emailController.text.trim();
+                          final msg = _messageController.text.trim();
+                          if (name.isEmpty || email.isEmpty || msg.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please fill name, email and message')),
+                            );
+                            setState(() => _postingMessage = false);
+                            return;
+                          }
+
+                          final repo = ref.read(placesRepositoryProvider);
+                          try {
+                            final SubmitReviewResult result = await repo.submitPlaceMessage(
+                              id: widget.place.id,
+                              name: name,
+                              email: email,
+                              message: msg,
+                            );
+                            if (!mounted) return;
+                            if (result.success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(result.message), backgroundColor: Colors.green),
+                              );
+                              _nameController.clear();
+                              _emailController.clear();
+                              _messageController.clear();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(result.message)),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => _postingMessage = false);
+                          }
                         },
                       ),
 

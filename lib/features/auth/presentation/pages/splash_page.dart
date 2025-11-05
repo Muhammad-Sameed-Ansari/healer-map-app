@@ -52,9 +52,10 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       body: Column(
         children: [
           Expanded(
-            child: Row(children: [
-              Expanded(child: Image.asset("assets/images/Welcome.png", fit: BoxFit.fitWidth,)),
-            ],),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(image: DecorationImage(image: AssetImage("assets/images/Welcome.png"),fit: BoxFit.cover)),
+            ),
           ),
         ],
       ),

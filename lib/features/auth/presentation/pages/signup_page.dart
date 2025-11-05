@@ -18,12 +18,12 @@ class SignupPage extends ConsumerStatefulWidget {
 
 class _SignupPageState extends ConsumerState<SignupPage> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameCtrl = TextEditingController(text: "Jon");
-  final _lastNameCtrl = TextEditingController(text: 'Don');
-  final _usernameCtrl = TextEditingController(text: 'johndoe@123');
-  final _emailCtrl = TextEditingController(text: 'john@example.com');
-  final _passwordCtrl = TextEditingController(text: '12345678');
-  final _confirmPasswordCtrl = TextEditingController(text: '12345678');
+  final _firstNameCtrl = TextEditingController(text: "");
+  final _lastNameCtrl = TextEditingController(text: '');
+  final _usernameCtrl = TextEditingController(text: '');
+  final _emailCtrl = TextEditingController(text: '');
+  final _passwordCtrl = TextEditingController(text: '');
+  final _confirmPasswordCtrl = TextEditingController(text: '');
 
   @override
   void dispose() {

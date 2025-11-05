@@ -8,6 +8,7 @@ class AppScaffold extends ConsumerWidget {
   final List<Widget>? actions;
   final Widget? floatingActionButton;
   final bool showBack;
+  final Widget? leading;
 
   const AppScaffold({
     super.key,
@@ -16,6 +17,7 @@ class AppScaffold extends ConsumerWidget {
     this.actions,
     this.floatingActionButton,
     this.showBack = true,
+    this.leading,
   });
 
   @override
@@ -29,23 +31,24 @@ class AppScaffold extends ConsumerWidget {
         backgroundColor: Colors.white,
         centerTitle: true,
         leadingWidth: 65,
-        leading: Navigator.canPop(context) && showBack
-            ? Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Container
-                  (
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 22, color: Colors.black),
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                ),
-              )
-            : null,
+        leading: leading ??
+            (Navigator.canPop(context) && showBack
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new,
+                            size: 22, color: Colors.black),
+                        onPressed: () => Navigator.of(context).maybePop(),
+                      ),
+                    ),
+                  )
+                : null),
         title: Text(
           appTitle,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(

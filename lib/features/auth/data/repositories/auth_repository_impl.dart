@@ -254,6 +254,7 @@ class AuthRepositoryImpl implements AuthRepository {
           if (displayName.isNotEmpty) SharedPreference.instance.setString('display_name', displayName);
           if (rawAvatar != null && rawAvatar.toString().isNotEmpty) {
             SharedPreference.instance.setString('avatar_url', rawAvatar.toString());
+            print("${SharedPreference.instance.getString('avatar_url')}");
           }
 
           // Refresh cached user if token remains same
