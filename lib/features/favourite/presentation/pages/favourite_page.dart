@@ -128,6 +128,7 @@ Place _toPlace(f) {
     language: f.language,
     location: f.location,
     isFavorite: true,
+    isPaid: false, // Favorites don't track isPaid, default to false
   );
 }
 

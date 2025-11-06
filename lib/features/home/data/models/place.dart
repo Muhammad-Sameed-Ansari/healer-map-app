@@ -7,6 +7,10 @@ class Place {
   final String language;
   final String location;
   final bool isFavorite;
+  final bool isPaid;
+  final int? packageId;
+  final bool isSubscribed;
+  final String? planName;
 
   const Place({
     required this.id,
@@ -17,6 +21,10 @@ class Place {
     required this.language,
     required this.location,
     required this.isFavorite,
+    this.isPaid = false,
+    this.packageId,
+    this.isSubscribed = false,
+    this.planName,
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
@@ -32,6 +40,11 @@ class Place {
       language: (json['language'] ?? '') as String,
       location: (json['location'] ?? '') as String,
       isFavorite: (json['is_favorite'] ?? false) as bool,
+      packageId: json['package_id'] as int?,
+      isSubscribed: (json['is_subscribed'] ?? false) as bool,
+      planName: json['plan_name'] as String?,
+      // Use is_subscribed as the flag for highlighting premium/paid healers
+      isPaid: (json['is_subscribed'] ?? false) as bool,
     );
   }
 }

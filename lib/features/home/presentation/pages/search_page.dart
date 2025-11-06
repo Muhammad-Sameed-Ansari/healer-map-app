@@ -372,6 +372,7 @@ class _SearchResultsListState extends ConsumerState<SearchResultsList> {
                   language: p.language,
                   imageUrl: p.featuredImage,
                   isFavorite: _favOverrides[p.id] ?? p.isFavorite,
+                  isPaid: p.isPaid,
                   heroTag: 'healer_${p.id}',
                   onFavoriteToggle: () async {
                     final favCtrl = ref.read(favoritesControllerProvider.notifier);

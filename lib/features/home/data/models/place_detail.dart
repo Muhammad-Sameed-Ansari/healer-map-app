@@ -7,6 +7,10 @@ class PlaceDetail {
   final String language;
   final String location;
   final bool isFavorite;
+  final bool isPaid;
+  final int? packageId;
+  final bool isSubscribed;
+  final String? planName;
   final String content;
   final String date;
   final String author;
@@ -27,6 +31,10 @@ class PlaceDetail {
     required this.language,
     required this.location,
     required this.isFavorite,
+    this.isPaid = false,
+    this.packageId,
+    this.isSubscribed = false,
+    this.planName,
     required this.content,
     required this.date,
     required this.author,
@@ -49,6 +57,11 @@ class PlaceDetail {
       language: (json['language'] ?? '') as String,
       location: (json['location'] ?? '') as String,
       isFavorite: (json['is_favorite'] ?? false) as bool,
+      packageId: json['package_id'] as int?,
+      isSubscribed: (json['is_subscribed'] ?? false) as bool,
+      planName: json['plan_name'] as String?,
+      // Use is_subscribed as the flag for highlighting premium/paid healers
+      isPaid: (json['is_subscribed'] ?? false) as bool,
       content: (json['content'] ?? '') as String,
       date: (json['date'] ?? '') as String,
       author: (json['author'] ?? '') as String,

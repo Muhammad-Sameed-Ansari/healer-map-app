@@ -234,6 +234,7 @@ class _HomePageState extends State<HomePage> {
                               language: p.language,
                               imageUrl: p.featuredImage,
                               isFavorite: _favOverrides[p.id] ?? p.isFavorite,
+                              isPaid: p.isPaid,
                               heroTag: 'healer_${p.id}',
                               onFavoriteToggle: () async {
                                 final favCtrl = ref.read(favoritesControllerProvider.notifier);
@@ -321,6 +322,7 @@ class HealerCard extends StatelessWidget {
   final VoidCallback? onFavoriteToggle;
   final String? imageUrl;
   final String? heroTag;
+  final bool isPaid;
 
   const HealerCard({
     required this.name,
@@ -331,6 +333,7 @@ class HealerCard extends StatelessWidget {
     this.onFavoriteToggle,
     this.imageUrl,
     this.heroTag,
+    this.isPaid = false,
   });
 
   @override
@@ -342,114 +345,163 @@ class HealerCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: isPaid ? Border.all(color: const Color(0xFFFFD700), width: 2.5) : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: isPaid ? const Color(0xFFFFD700).withOpacity(0.3) : Colors.black.withOpacity(0.1), 
+            blurRadius: isPaid ? 16 : 12, 
+            offset: const Offset(0, 6)
+          ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: heroTag != null
-                ? Hero(
-                    tag: heroTag!,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: imageUrl != null && imageUrl!.isNotEmpty
-                          ? Image.network(
-                              imageUrl!,
-                              width: 90,
-                              height: 90,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Image.asset(
-                                'assets/images/doctor.png',
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: heroTag != null
+                    ? Hero(
+                        tag: heroTag!,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: imageUrl != null && imageUrl!.isNotEmpty
+                              ? Image.network(
+                                  imageUrl!,
+                                  width: 90,
+                                  height: 90,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Image.asset(
+                                    'assets/images/doctor.png',
+                                    width: 90,
+                                    height: 90,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
+                        ),
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: imageUrl != null && imageUrl!.isNotEmpty
+                            ? Image.network(
+                                imageUrl!,
                                 width: 90,
                                 height: 90,
                                 fit: BoxFit.cover,
-                              ),
-                            )
-                          : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
-                    ),
-                  )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: imageUrl != null && imageUrl!.isNotEmpty
-                        ? Image.network(
-                            imageUrl!,
-                            width: 90,
-                            height: 90,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Image.asset(
-                              'assets/images/doctor.png',
-                              width: 90,
-                              height: 90,
-                              fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Image.asset(
+                                  'assets/images/doctor.png',
+                                  width: 90,
+                                  height: 90,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
+                      ),
+              ),
+
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12.0,bottom: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis,style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                          ),
+                          IconButton(
+                            onPressed: onFavoriteToggle,
+                            icon: Icon(
+                              isFavorite == true ? Icons.favorite : Icons.favorite_border,
+                              color: isFavorite == true ? Colors.red : null,
                             ),
                           )
-                        : Image.asset('assets/images/doctor.png', width: 90, height: 90, fit: BoxFit.cover),
-                  ),
-          ),
-
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12.0,bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis,style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        ],
                       ),
-                      IconButton(
-                        onPressed: onFavoriteToggle,
-                        icon: Icon(
-                          isFavorite == true ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite == true ? Colors.red : null,
-                        ),
+                      Text(
+                        specialty,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54,fontSize: 10),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Spacer(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.place, size: 14, color: Colors.purple),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              location,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Image.asset("assets/icons/profile_language.png",height: 14,color: Colors.purple,),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              language,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                            ),
+                          ),
+                        ],
                       )
                     ],
                   ),
-                  Text(
-                    specialty,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54,fontSize: 10),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                ),
+              )
+            ],
+          ),
+          // Premium/Paid badge
+          if (isPaid)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.place, size: 14, color: Colors.purple),
-                      const SizedBox(width: 2),
-                      Expanded(
-                        child: Text(
-                          location,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.star, size: 12, color: Colors.white),
+                    SizedBox(width: 4),
+                    Text(
+                      'PREMIUM',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
-                      const SizedBox(width: 8),
-                      Image.asset("assets/icons/profile_language.png",height: 14,color: Colors.purple,),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          language,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                      ),
-                    ],
-                  )
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          )
         ],
       ),
     );
