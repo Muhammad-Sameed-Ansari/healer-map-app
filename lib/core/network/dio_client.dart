@@ -112,9 +112,23 @@ class DioClient {
 
   Future<Response?> get(String uri, {Map<String, dynamic>? queryParameters}) => request("GET", uri, queryParameters: queryParameters);
 
-  Future<Response?> post(String uri, {dynamic data}) => request("POST", uri, data: data);
+  Future<Response?> post(String uri, {dynamic data}) => request(
+    "POST", 
+    uri, 
+    data: data,
+    options: Options(
+      contentType: Headers.jsonContentType,
+    ),
+  );
 
-  Future<Response?> put(String uri, {dynamic data}) => request("PUT", uri, data: data);
+  Future<Response?> put(String uri, {dynamic data}) => request(
+    "PUT", 
+    uri, 
+    data: data,
+    options: Options(
+      contentType: Headers.jsonContentType,
+    ),
+  );
 
   Future<Response?> delete(String uri, {dynamic data}) => request("DELETE", uri, data: data);
 }

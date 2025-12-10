@@ -345,10 +345,10 @@ class HealerCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: isPaid ? Border.all(color: const Color(0xFFFFD700), width: 2.5) : null,
+        border: isPaid ? Border.all(color: ColorConstants.primary, width: 2.5) : null,
         boxShadow: [
           BoxShadow(
-            color: isPaid ? const Color(0xFFFFD700).withOpacity(0.3) : Colors.black.withOpacity(0.1), 
+            color: isPaid ? ColorConstants.primary.withOpacity(0.3) : Colors.black.withOpacity(0.1), 
             blurRadius: isPaid ? 16 : 12, 
             offset: const Offset(0, 6)
           ),
@@ -470,8 +470,8 @@ class HealerCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                  gradient: LinearGradient(
+                    colors: [ColorConstants.primary, ColorConstants.primary.withOpacity(0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -490,7 +490,7 @@ class HealerCard extends StatelessWidget {
                     Icon(Icons.star, size: 12, color: Colors.white),
                     SizedBox(width: 4),
                     Text(
-                      'PREMIUM',
+                      'DIAMOND',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,

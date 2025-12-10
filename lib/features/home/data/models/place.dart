@@ -43,8 +43,9 @@ class Place {
       packageId: json['package_id'] as int?,
       isSubscribed: (json['is_subscribed'] ?? false) as bool,
       planName: json['plan_name'] as String?,
-      // Use is_subscribed as the flag for highlighting premium/paid healers
-      isPaid: (json['is_subscribed'] ?? false) as bool,
+      // isPaid is true only if subscribed AND packageId is 4 or 5
+      isPaid: (json['is_subscribed'] ?? false) as bool && 
+              (json['package_id'] == 4 || json['package_id'] == 5),
     );
   }
 }

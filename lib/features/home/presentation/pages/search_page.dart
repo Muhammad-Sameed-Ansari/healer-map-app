@@ -298,11 +298,32 @@ class SearchResultsList extends ConsumerStatefulWidget {
 class _SearchResultsListState extends ConsumerState<SearchResultsList> {
   // Optimistic favorite overrides: placeId -> isFavorite
   final Map<int, bool> _favOverrides = {};
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      // Load more when user scrolls near the bottom (200px threshold)
+      ref.read(paginatedSearchProvider.notifier).loadMore();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final ref = this.ref;
-    final resultsAsync = ref.watch(searchResultsProvider);
+    final resultsAsync = ref.watch(paginatedSearchProvider);
 
     return resultsAsync.when(
       loading: () => Padding(
@@ -333,7 +354,9 @@ class _SearchResultsListState extends ConsumerState<SearchResultsList> {
           ),
         ),
       ),
-      data: (places) {
+      data: (paginatedState) {
+        final places = paginatedState.places;
+        
         if (places.isEmpty) {
           return Center(
             child: Column(
@@ -357,9 +380,22 @@ class _SearchResultsListState extends ConsumerState<SearchResultsList> {
         }
 
         return ListView.builder(
+          controller: _scrollController,
           padding: const EdgeInsets.all(16),
-          itemCount: places.length,
+          itemCount: places.length + (paginatedState.hasMore ? 1 : 0),
           itemBuilder: (context, index) {
+            // Show loading indicator at the bottom
+            if (index == places.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Center(
+                  child: paginatedState.isLoadingMore
+                      ? const CircularProgressIndicator()
+                      : const SizedBox.shrink(),
+                ),
+              );
+            }
+
             final p = places[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
@@ -397,7 +433,7 @@ class _SearchResultsListState extends ConsumerState<SearchResultsList> {
                       });
                     } finally {
                       // Refresh to sync with latest server state
-                      ref.invalidate(searchResultsProvider);
+                      ref.read(paginatedSearchProvider.notifier).refresh();
                       await ref.read(favoritesControllerProvider.notifier).refresh();
                     }
                   },
