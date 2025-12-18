@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -24,6 +26,21 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to take photos for your profile picture and to capture images of healing sites and locations that you can share with the community.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location is used to show your position on the map.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The microphone is used to record audio messages and voice notes that you can share about healing sites and locations.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This app accesses website content that uses cookies to improve your experience and analyze site usage. Your data will not be shared with third parties for advertising purposes.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -41,22 +58,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<!-- App Transport Security: allow external loads (can be narrowed to specific domains later) -->
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
-	<!-- Usage descriptions for features the web page may request -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location is used to show your position on the map.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Camera may be used for in-page features.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Microphone may be used for in-page features.</string>
 </dict>
 </plist>

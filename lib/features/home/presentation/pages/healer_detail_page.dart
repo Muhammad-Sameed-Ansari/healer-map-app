@@ -13,6 +13,8 @@ import 'package:healer_map_flutter/features/home/presentation/providers/place_de
 import 'package:healer_map_flutter/features/home/data/models/place_detail.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:healer_map_flutter/features/home/data/repositories/places_repository.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'dart:io';
 
 class HealerDetailPage extends ConsumerStatefulWidget {
   final Place place;
@@ -36,6 +38,7 @@ class _HealerDetailPageState extends ConsumerState<HealerDetailPage> {
   void initState() {
     super.initState();
     _isFavorite = widget.place.isFavorite;
+    _requestTrackingPermission();
   }
 
   @override
@@ -45,6 +48,21 @@ class _HealerDetailPageState extends ConsumerState<HealerDetailPage> {
     _messageController.dispose();
     _reviewController.dispose();
     super.dispose();
+  }
+
+  Future<void> _requestTrackingPermission() async {
+    // Only request tracking permission on iOS
+    if (!Platform.isIOS) return;
+
+    try {
+      final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+      if (status == TrackingStatus.notDetermined) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        await AppTrackingTransparency.requestTrackingAuthorization();
+      }
+    } catch (e) {
+      print('Error requesting tracking permission: $e');
+    }
   }
 
   String _cleanText(String input) {

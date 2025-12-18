@@ -463,45 +463,45 @@ class HealerCard extends StatelessWidget {
             ],
           ),
           // Premium/Paid badge
-          if (isPaid)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [ColorConstants.primary, ColorConstants.primary.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.star, size: 12, color: Colors.white),
-                    SizedBox(width: 4),
-                    Text(
-                      'DIAMOND',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          // if (isPaid)
+          //   Positioned(
+          //     top: 8,
+          //     left: 8,
+          //     child: Container(
+          //       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          //       decoration: BoxDecoration(
+          //         gradient: LinearGradient(
+          //           colors: [ColorConstants.primary, ColorConstants.primary.withOpacity(0.8)],
+          //           begin: Alignment.topLeft,
+          //           end: Alignment.bottomRight,
+          //         ),
+          //         borderRadius: BorderRadius.circular(8),
+          //         boxShadow: [
+          //           BoxShadow(
+          //             color: Colors.black.withOpacity(0.2),
+          //             blurRadius: 4,
+          //             offset: const Offset(0, 2),
+          //           ),
+          //         ],
+          //       ),
+          //       child: Row(
+          //         mainAxisSize: MainAxisSize.min,
+          //         children: const [
+          //           Icon(Icons.star, size: 12, color: Colors.white),
+          //           SizedBox(width: 4),
+          //           Text(
+          //             'DIAMOND',
+          //             style: TextStyle(
+          //               color: Colors.white,
+          //               fontSize: 10,
+          //               fontWeight: FontWeight.bold,
+          //               letterSpacing: 0.5,
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //   ),
         ],
       ),
     );

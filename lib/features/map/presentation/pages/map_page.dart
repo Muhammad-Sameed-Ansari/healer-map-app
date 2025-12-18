@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healer_map_flutter/common/widgets/app_scaffold.dart';
 import 'package:healer_map_flutter/core/localization/app_localization.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'dart:io';
 
 class MapPage extends ConsumerStatefulWidget {
   const MapPage({super.key});
@@ -25,6 +27,7 @@ class _MapPageState extends ConsumerState<MapPage> {
   @override
   void initState() {
     super.initState();
+    _requestTrackingPermission();
     _pullToRefreshController = PullToRefreshController(
       onRefresh: () async {
         _errorText.value = null;
@@ -48,6 +51,21 @@ class _MapPageState extends ConsumerState<MapPage> {
     // Set to null to avoid any further usages during teardown.
     _pullToRefreshController = null;
     super.dispose();
+  }
+
+  Future<void> _requestTrackingPermission() async {
+    // Only request tracking permission on iOS
+    if (!Platform.isIOS) return;
+
+    try {
+      final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+      if (status == TrackingStatus.notDetermined) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        await AppTrackingTransparency.requestTrackingAuthorization();
+      }
+    } catch (e) {
+      print('Error requesting tracking permission: $e');
+    }
   }
 
   void _startLoading() {
